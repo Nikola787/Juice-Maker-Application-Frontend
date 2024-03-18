@@ -1,4 +1,5 @@
 import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
 
 import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
@@ -21,7 +22,7 @@ export const MainPage = (props) => {
 
   const [categoriesArr, setCategoriesArr] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [ingredientsArr, setIngredientsArr] = useState([]);
+  // const [ingredientsArr, setIngredientsArr] = useState([]);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
 
   const [koktelDetails, setKoktelDetails] = useState(null);
@@ -29,13 +30,15 @@ export const MainPage = (props) => {
   const [isModalopen, setModalOpen] = useState(false);
   const [isJuiceModalOpen, setJuiceModalOpen] = useState(false);
 
+  const [inputValue, setInputValue] = useState("");
+
   useEffect(() => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    prepareIngredients();
-  }, [data]);
+  // useEffect(() => {
+  //   prepareIngredients();
+  // }, [data]);
 
   useEffect(() => {
     prepareCategories();
@@ -88,18 +91,18 @@ export const MainPage = (props) => {
     }
   }
 
-  const prepareIngredients = () => {
-    const uniqueIngredients = [];
-    arr?.forEach((item) => {
-      item.sastojci.forEach((sastojciItem) => {
-        const ingredient = sastojciItem[0];
-        if (!uniqueIngredients.includes(ingredient)) {
-          uniqueIngredients.push(ingredient);
-        }
-      });
-    });
-    setIngredientsArr(uniqueIngredients);
-  };
+  // const prepareIngredients = () => {
+  //   const uniqueIngredients = [];
+  //   arr?.forEach((item) => {
+  //     item.sastojci.forEach((sastojciItem) => {
+  //       const ingredient = sastojciItem[0];
+  //       if (!uniqueIngredients.includes(ingredient)) {
+  //         uniqueIngredients.push(ingredient);
+  //       }
+  //     });
+  //   });
+  //   setIngredientsArr(uniqueIngredients);
+  // };
 
   const prepareCategories = () => {
     setCategoriesArr([...new Set(arr?.map((item) => item.nazivKategorije))]);
@@ -169,6 +172,23 @@ export const MainPage = (props) => {
     setJuiceModalOpen(true);
   };
 
+  const handleInputChange = (event) => {
+    setInputValue(event.target.value);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" && inputValue.trim() !== '' && !selectedIngredients.includes(inputValue.trim())) {
+      setSelectedIngredients((chips) => [...chips, inputValue.trim()]);
+      setInputValue('');
+    }
+  };
+
+  const handleChipDelete = (chipToDelete) => () => {
+    setSelectedIngredients((chips) =>
+      chips.filter((chip) => chip !== chipToDelete)
+    );
+  };
+
   return (
     <>
       {!data && (
@@ -186,7 +206,7 @@ export const MainPage = (props) => {
               marginTop: "20px",
               marginBottom: "-20px",
               fontSize: "35px",
-              color: "darkblue"
+              color: "darkblue",
             }}
           >
             Juice maker application
@@ -227,14 +247,24 @@ export const MainPage = (props) => {
               </div>
 
               <div className={styles["ingredients-box"]}>
-                <MultiSelect
-                  label={"Choose Ingredients"}
-                  options={ingredientsArr}
-                  setField={setSelectedIngredients}
-                >
-                  Ingredients
-                </MultiSelect>
+                  <TextField
+                    style={{ width: '700px' }} // Adjust the width as needed
+                    label={"Insert Ingredients (press enter to add)"}
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                  />
               </div>
+              {selectedIngredients.map((ingredient) => (
+                    <Chip
+                      style={{marginTop: "20px"}}
+                      key={ingredient}
+                      label={ingredient}
+                      onDelete={handleChipDelete(ingredient)}
+                      color="primary"
+                      variant="outlined"
+                    />
+                  ))}
             </div>
 
             <div className={styles["koktels-box"]}>
