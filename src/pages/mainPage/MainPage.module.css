@@ -1,0 +1,63 @@
+body {
+    margin: 10px;
+  }
+  
+.upper-box {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center ;
+
+}
+
+.search-box {
+    width: 70%;
+    margin: 10px;
+}
+
+.button-box {
+    display: flex;
+    align-items: center;
+}
+
+.filter-buttons {
+    margin-top: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    width: 90%;
+    gap: 3%;
+}
+
+.category-box {
+    /* z-index: 10; */
+}
+
+.ingredients-box {
+}
+
+.add-box {
+    margin: 40px;
+    display: flex;
+    margin-left: 5%;
+}
+
+.koktels-box {
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-top: 80px;
+    margin-left: 5%;
+    width: 100%;
+    gap: 40px;
+    /* z-index: -10; */
+
+}
+
+.modal {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto; /* Enable scrolling if content overflows */
+  }

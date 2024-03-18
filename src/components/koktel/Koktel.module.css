@@ -1,0 +1,17 @@
+.juice-box {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 300px;
+    column-gap: 300px;
+    background-color: aliceblue;
+}
+
+.description-box-naziv {
+    padding-bottom: 20px;
+}
+
+.image-box {
+
+}
+
