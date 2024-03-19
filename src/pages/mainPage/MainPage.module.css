@@ -39,7 +39,9 @@ body {
 .add-box {
     margin: 40px;
     display: flex;
+    justify-content: space-between;
     margin-left: 5%;
+    margin-right: 10%;
 }
 
 .koktels-box {

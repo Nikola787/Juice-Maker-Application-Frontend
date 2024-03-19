@@ -99,7 +99,7 @@ const JuiceFormModal = (props) => {
           throw new Error("Failed ");
         }
 
-        props.fetchData();
+        props.filterData();
         props.setJuiceModalOpen(false);
 
       } catch (error) {

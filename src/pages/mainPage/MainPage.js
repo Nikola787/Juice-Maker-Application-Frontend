@@ -16,14 +16,15 @@ import styles from "./MainPage.module.css";
 
 export const MainPage = (props) => {
   const [data, setData] = useState(null);
-  const [arr, setArr] = useState(null);
 
   const [searchField, setSearchField] = useState("");
 
   const [categoriesArr, setCategoriesArr] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  // const [ingredientsArr, setIngredientsArr] = useState([]);
   const [selectedIngredients, setSelectedIngredients] = useState([]);
+
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const [koktelDetails, setKoktelDetails] = useState(null);
 
@@ -33,39 +34,13 @@ export const MainPage = (props) => {
   const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
-    fetchData();
+    filterData();
+    prepareCategories();
   }, []);
 
-  // useEffect(() => {
-  //   prepareIngredients();
-  // }, [data]);
-
   useEffect(() => {
-    prepareCategories();
-  }, [arr]);
-
-  async function fetchData() {
-    const apiKey = process.env.REACT_APP_API_KEY;
-    const url = "http://localhost:8080/api/koktels-list";
-
-    try {
-      const response = await fetch(url, {
-        headers: {
-          api_key: apiKey,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch data");
-      }
-
-      const fetchedData = await response.json();
-      setData(fetchedData);
-      setArr(fetchedData);
-    } catch (error) {
-      console.error("Error fetching data:", error.message);
-    }
-  }
+    filterData();
+  }, [currentPage]);
 
   async function fetchDetails(idKoktela) {
     const apiKey = process.env.REACT_APP_API_KEY;
@@ -91,21 +66,42 @@ export const MainPage = (props) => {
     }
   }
 
-  // const prepareIngredients = () => {
-  //   const uniqueIngredients = [];
-  //   arr?.forEach((item) => {
-  //     item.sastojci.forEach((sastojciItem) => {
-  //       const ingredient = sastojciItem[0];
-  //       if (!uniqueIngredients.includes(ingredient)) {
-  //         uniqueIngredients.push(ingredient);
-  //       }
-  //     });
-  //   });
-  //   setIngredientsArr(uniqueIngredients);
-  // };
+  const prepareCategories = async () => {
 
-  const prepareCategories = () => {
-    setCategoriesArr([...new Set(arr?.map((item) => item.nazivKategorije))]);
+    const postData = async () => {
+      const url = "http://localhost:8080/api/kategorija-list";
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            api_key: process.env.REACT_APP_API_KEY,
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          const errorMessage = JSON.parse(errorText).join("\n");
+          alert(errorMessage);
+          throw new Error("There is a problem with the response");
+        }
+
+        const responseData = await response.json();
+        return responseData;
+      } catch (error) {
+        console.error("Error:", error);
+        throw error;
+      }
+    };
+
+    try {
+      const responseData = await postData();
+      setCategoriesArr(responseData.map(item => item.nazivKategorije));      
+
+    } catch (error) {
+      console.error("There is an error!");
+    }
+
   };
 
   const filterData = async () => {
@@ -115,6 +111,8 @@ export const MainPage = (props) => {
         search: searchField,
         kategorije: selectedCategories,
         sastojci: selectedIngredients,
+        offset: currentPage,
+        pageSize: 8,
       };
 
       try {
@@ -144,23 +142,21 @@ export const MainPage = (props) => {
 
     try {
       const responseData = await postData();
-      setData(responseData);
+      if (responseData.koktelsListResponses.length === 0) {
+        if (currentPage !== 0) {
+          setCurrentPage((currentPage) => currentPage - 1);
+        }
+        alert("There are no more data!");
+      } else {
+        setData(responseData.koktelsListResponses);
+      }
     } catch (error) {
       console.error("There is an error!");
     }
   };
 
   const filterHandler = () => {
-    if (
-      selectedCategories.length === 0 &&
-      selectedIngredients.length === 0 &&
-      searchField === null
-    ) {
-      setData(arr);
-      return;
-    } else {
-      filterData();
-    }
+    filterData();
   };
 
   const modalHandler = (idKoktela) => {
@@ -177,9 +173,13 @@ export const MainPage = (props) => {
   };
 
   const handleKeyDown = (event) => {
-    if (event.key === "Enter" && inputValue.trim() !== '' && !selectedIngredients.includes(inputValue.trim())) {
+    if (
+      event.key === "Enter" &&
+      inputValue.trim() !== "" &&
+      !selectedIngredients.includes(inputValue.trim())
+    ) {
       setSelectedIngredients((chips) => [...chips, inputValue.trim()]);
-      setInputValue('');
+      setInputValue("");
     }
   };
 
@@ -187,6 +187,14 @@ export const MainPage = (props) => {
     setSelectedIngredients((chips) =>
       chips.filter((chip) => chip !== chipToDelete)
     );
+  };
+
+  const previousPageHandler = () => {
+    setCurrentPage((currentPage) => currentPage - 1);
+  };
+
+  const nextPageHandler = () => {
+    setCurrentPage((currentPage) => currentPage + 1);
   };
 
   return (
@@ -211,6 +219,11 @@ export const MainPage = (props) => {
           >
             Juice maker application
           </h1>
+          <h4 style={{ marginLeft: "20px" }}>
+            FONtazija Kokteli is an application that allows users to access
+            various recipes for cocktails and also enables them to add their own
+            recipes to the collection.
+          </h4>
 
           <div className={styles["upper-box"]}>
             <div className={styles["search-box"]}>
@@ -247,24 +260,24 @@ export const MainPage = (props) => {
               </div>
 
               <div className={styles["ingredients-box"]}>
-                  <TextField
-                    style={{ width: '700px' }} // Adjust the width as needed
-                    label={"Insert Ingredients (press enter to add)"}
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    onKeyDown={handleKeyDown}
-                  />
+                <TextField
+                  style={{ width: "700px" }} // Adjust the width as needed
+                  label={"Insert Ingredients (press enter to add)"}
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                />
               </div>
               {selectedIngredients.map((ingredient) => (
-                    <Chip
-                      style={{marginTop: "20px"}}
-                      key={ingredient}
-                      label={ingredient}
-                      onDelete={handleChipDelete(ingredient)}
-                      color="primary"
-                      variant="outlined"
-                    />
-                  ))}
+                <Chip
+                  style={{ marginTop: "20px" }}
+                  key={ingredient}
+                  label={ingredient}
+                  onDelete={handleChipDelete(ingredient)}
+                  color="primary"
+                  variant="outlined"
+                />
+              ))}
             </div>
 
             <div className={styles["koktels-box"]}>
@@ -284,6 +297,21 @@ export const MainPage = (props) => {
               onClick={addJuiceHandler}
             >
               Add Juice
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ width: 300, height: 30, alignSelf: "center" }}
+              onClick={previousPageHandler}
+              disabled={currentPage === 0}
+            >
+              Previous page
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ width: 300, height: 30, alignSelf: "center" }}
+              onClick={nextPageHandler}
+            >
+              Next page
             </Button>
           </div>
           {isModalopen && (
@@ -326,7 +354,7 @@ export const MainPage = (props) => {
           {isJuiceModalOpen && (
             <Modal onClose={() => setJuiceModalOpen(false)}>
               <JuiceFormModal
-                fetchData={fetchData}
+                filterData={filterData}
                 setJuiceModalOpen={setJuiceModalOpen}
               />
             </Modal>
